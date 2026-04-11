@@ -1,27 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
   <title>Mini Discord</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen">
-  <div class="loginBox">
-    <h2>Mini Discord</h2>
-    <input id="usernameInput" placeholder="Enter username" />
-    <button id="enterBtn">Enter</button>
+<div id="login">
+  <div class="box">
+    <h1>Mini Discord</h1>
+    <input id="name" placeholder="username" />
+    <button id="enter">Enter</button>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden">
 
-  <div class="sidebar">
-    <div class="server-dot active"></div>
-  </div>
+  <div class="sidebar"></div>
 
   <div class="channels">
     <div class="channel" data-room="general"># general</div>
@@ -31,32 +26,42 @@
   <div class="chat">
     <div id="messages"></div>
 
-    <div class="inputBar">
-      <button id="gifBtn">GIF</button>
-      <input id="msgInput" placeholder="Message..." />
-      <button id="sendBtn">Send</button>
+    <div class="input">
+      <input id="msg" />
+      <button id="send">Send</button>
+      <button id="ownerBtn" class="hidden">OWNER</button>
     </div>
   </div>
 
   <div class="users">
-    <h4>Online</h4>
-    <div id="userList"></div>
+    <h3>Users</h3>
+    <div id="users"></div>
   </div>
 
 </div>
 
-<!-- GIF PANEL -->
-<div id="gifPanel" class="hidden">
-  <input id="gifSearch" placeholder="Search GIFs..." />
-  <div id="gifResults"></div>
-</div>
-
 <!-- OWNER PANEL -->
-<div id="ownerModal" class="hidden">
-  <div class="modal">
-    <h3>👑 Owner Panel</h3>
-    <textarea id="announcementText"></textarea>
-    <button id="sendAnnouncement">Send Announcement</button>
+<div id="ownerPanel" class="hidden">
+  <div class="panel">
+
+    <h2>👑 OWNER PANEL</h2>
+
+    <textarea id="announce" placeholder="Announcement"></textarea>
+    <button id="sendAnnounce">Send Announcement</button>
+
+    <textarea id="broadcast" placeholder="Broadcast message"></textarea>
+    <button id="sendBroadcast">Broadcast All Rooms</button>
+
+    <input id="kickUser" placeholder="Kick username" />
+    <button id="kickBtn">Kick</button>
+
+    <input id="slowRoom" placeholder="room" />
+    <input id="slowMs" placeholder="ms slowmode" />
+    <button id="slowBtn">Set Slowmode</button>
+
+    <input id="clearRoom" placeholder="clear room name" />
+    <button id="clearBtn">Clear Room</button>
+
     <button id="closeOwner">Close</button>
   </div>
 </div>
