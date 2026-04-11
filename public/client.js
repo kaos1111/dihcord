@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
     gifPanel.classList.toggle("hidden");
   };
 
-  const API_KEY = "YOUR_GIPHY_API_KEY";
+  const API_KEY = "OU2xZQ6AXcETFTcyKX3Vd0pf5HB7wwFd";
 
   document.getElementById("gifSearch").addEventListener("input", async e => {
     const q = e.target.value;
