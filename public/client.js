@@ -4,9 +4,7 @@ let username = "";
 let room = "general";
 let isOwner = false;
 
-/* =========================
-   ENTER APP
-========================= */
+/* LOGIN */
 function enterApp() {
   username = document.getElementById("usernameInput").value;
   if (!username) return;
@@ -17,18 +15,14 @@ function enterApp() {
   socket.emit("join", { username, room });
 }
 
-/* =========================
-   SWITCH ROOM
-========================= */
+/* ROOM */
 function switchRoom(r) {
   room = r;
   document.getElementById("messages").innerHTML = "";
   socket.emit("join", { username, room });
 }
 
-/* =========================
-   CHAT INPUT
-========================= */
+/* MESSAGE */
 const input = document.getElementById("msgInput");
 
 input.addEventListener("keydown", (e) => {
@@ -38,17 +32,15 @@ input.addEventListener("keydown", (e) => {
   }
 });
 
-/* =========================
-   RECEIVE
-========================= */
-socket.on("receive-message", addMessage);
-
-socket.on("chat-history", (msgs) => {
-  const box = document.getElementById("messages");
-  box.innerHTML = "";
-  msgs.forEach(addMessage);
+/* RECEIVE */
+socket.on("receive-message", (msg) => {
+  const div = document.createElement("div");
+  div.className = "message";
+  div.textContent = `${msg.user}: ${msg.text}`;
+  document.getElementById("messages").appendChild(div);
 });
 
+/* USERS */
 socket.on("user-list", (users) => {
   const list = document.getElementById("userList");
   list.innerHTML = "";
@@ -59,63 +51,12 @@ socket.on("user-list", (users) => {
   });
 });
 
-/* =========================
-   MESSAGE RENDER
-========================= */
-function addMessage(msg) {
-  const div = document.createElement("div");
-  div.className = "message";
-  div.textContent = `${msg.user}: ${msg.text}`;
-  document.getElementById("messages").appendChild(div);
-}
-
-/* =========================
-   GIF (ONLY WORKS IN APP)
-========================= */
-const gifKey = "OU2xZQ6AXcETFTcyXK3Vd0pf5HB7wwFd";
-
-document.getElementById("gifSearch").addEventListener("input", async (e) => {
-  const q = e.target.value;
-  if (!q) return;
-
-  const res = await fetch(
-    `https://api.giphy.com/v1/gifs/search?api_key=${gifKey}&q=${q}&limit=8`
-  );
-
-  const data = await res.json();
-
-  const box = document.getElementById("gifResults");
-  box.innerHTML = "";
-
-  data.data.forEach(g => {
-    const img = document.createElement("img");
-    img.src = g.images.fixed_width.url;
-
-    img.onclick = () => {
-      socket.emit("send-message", {
-        text: g.images.fixed_width.url
-      });
-
-      document.getElementById("gifPanel").classList.add("hidden");
-    };
-
-    box.appendChild(img);
-  });
-});
-
-/* =========================
-   GIF PANEL TOGGLE (SAFE)
-========================= */
+/* GIF */
 function toggleGifPanel() {
-  const appVisible = !document.getElementById("app").classList.contains("hidden");
-  if (!appVisible) return;
-
   document.getElementById("gifPanel").classList.toggle("hidden");
 }
 
-/* =========================
-   OWNER PANEL
-========================= */
+/* OWNER */
 function toggleOwnerPanel() {
   document.getElementById("ownerPanel").classList.toggle("hidden");
 }
@@ -123,36 +64,31 @@ function toggleOwnerPanel() {
 function sendOwnerMsg() {
   const text = prompt("Announcement:");
   if (!text) return;
-
   socket.emit("owner-message", text);
 }
 
-/* =========================
-   OWNER UNLOCK (K+A+O+S HOLD 3s)
-========================= */
-const required = new Set(["k", "a", "o", "s"]);
-const pressed = new Set();
-
+/* OWNER UNLOCK */
+const keys = new Set();
+const req = new Set(["k","a","o","s"]);
 let timer = null;
 
 document.addEventListener("keydown", (e) => {
   const k = e.key.toLowerCase();
-  if (!required.has(k)) return;
+  if (!req.has(k)) return;
 
-  pressed.add(k);
+  keys.add(k);
 
-  if (pressed.size === 4 && !timer && !isOwner) {
+  if (keys.size === 4 && !timer && !isOwner) {
     timer = setTimeout(() => {
       isOwner = true;
       socket.emit("owner-unlock");
-
       document.getElementById("ownerPanel").classList.remove("hidden");
     }, 3000);
   }
 });
 
 document.addEventListener("keyup", () => {
-  pressed.clear();
+  keys.clear();
   clearTimeout(timer);
   timer = null;
 });
