@@ -18,7 +18,11 @@ const messages = {
   random: []
 };
 
-const users = {}; // socket.id -> username
+// room-based users (FIXED)
+const users = {
+  general: {},
+  random: {}
+};
 
 /* =========================
    SOCKET LOGIC
@@ -28,94 +32,82 @@ io.on("connection", (socket) => {
 
   /* JOIN ROOM */
   socket.on("join", ({ username, room }) => {
-    users[socket.id] = username;
-
-    socket.join(room);
+    socket.username = username;
     socket.room = room;
 
-    // send chat history for room
+    users[room][socket.id] = username;
+
+    socket.join(room);
+
     socket.emit("chat-history", messages[room] || []);
 
-    // update user list
     updateUsers(room);
 
-    // system message
     socket.to(room).emit("system-message", {
       text: `${username} joined #${room}`,
       time: new Date().toLocaleTimeString()
     });
   });
 
-  /* =========================
-     SEND MESSAGE (OBJECT SUPPORT)
-  ========================= */
+  /* SEND MESSAGE */
   socket.on("send-message", (msg) => {
     const room = socket.room;
+    if (!room) return;
 
-    // normalize message (IMPORTANT)
     const message = {
       type: msg.type || "text",
-      user: users[socket.id] || "Anonymous",
+      user: socket.username || "Anonymous",
       time: new Date().toLocaleTimeString(),
-
-      // text message
       text: msg.text || "",
-
-      // gif message
       url: msg.url || null
     };
 
-    // store message
     if (!messages[room]) messages[room] = [];
     messages[room].push(message);
 
-    // limit memory
     if (messages[room].length > 200) {
       messages[room].shift();
     }
 
-    // broadcast
     io.to(room).emit("receive-message", message);
   });
 
-  /* =========================
-     TYPING
-  ========================= */
+  /* TYPING */
   socket.on("typing", () => {
-    socket.to(socket.room).emit("typing", users[socket.id]);
+    socket.to(socket.room).emit("typing", socket.username);
   });
 
-  /* =========================
-     DISCONNECT
-  ========================= */
+  /* OWNER AUTH (SECURE) */
+  socket.on("owner-auth", ({ password }) => {
+    if (password === "CHANGE_THIS_SECRET") {
+      socket.emit("owner-granted");
+    } else {
+      socket.emit("owner-denied");
+    }
+  });
+
+  /* DISCONNECT */
   socket.on("disconnect", () => {
     const room = socket.room;
-    const username = users[socket.id];
+    const username = socket.username;
 
-    delete users[socket.id];
-
-    if (room) {
+    if (room && users[room]) {
+      delete users[room][socket.id];
       updateUsers(room);
 
       socket.to(room).emit("system-message", {
-        text: `${username} left`,
+        text: `${username || "Someone"} left`,
         time: new Date().toLocaleTimeString()
       });
     }
   });
 
-  /* =========================
-     UPDATE USERS LIST
-  ========================= */
   function updateUsers(room) {
-    const roomUsers = Object.values(users);
+    const roomUsers = Object.values(users[room] || {});
     io.to(room).emit("user-list", roomUsers);
   }
 });
 
-/* =========================
-   START SERVER
-========================= */
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
