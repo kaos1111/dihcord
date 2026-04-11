@@ -10,9 +10,6 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static("public"));
 
-/* =========================
-   STORAGE
-========================= */
 const messages = {
   general: [],
   random: []
@@ -23,9 +20,6 @@ const users = {
   random: {}
 };
 
-/* =========================
-   SOCKET.IO
-========================= */
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
@@ -60,28 +54,14 @@ io.on("connection", (socket) => {
       url: msg.url || null
     };
 
-    if (!messages[room]) messages[room] = [];
     messages[room].push(message);
-
-    if (messages[room].length > 200) {
-      messages[room].shift();
-    }
+    if (messages[room].length > 200) messages[room].shift();
 
     io.to(room).emit("receive-message", message);
   });
 
   socket.on("typing", () => {
-    if (socket.room) {
-      socket.to(socket.room).emit("typing", socket.username);
-    }
-  });
-
-  socket.on("owner-auth", ({ password }) => {
-    if (password === "CHANGE_THIS_SECRET") {
-      socket.emit("owner-granted");
-    } else {
-      socket.emit("owner-denied");
-    }
+    if (socket.room) socket.to(socket.room).emit("typing", socket.username);
   });
 
   socket.on("disconnect", () => {
@@ -100,8 +80,7 @@ io.on("connection", (socket) => {
   });
 
   function updateUsers(room) {
-    const roomUsers = Object.values(users[room] || {});
-    io.to(room).emit("user-list", roomUsers);
+    io.to(room).emit("user-list", Object.values(users[room] || {}));
   }
 });
 
