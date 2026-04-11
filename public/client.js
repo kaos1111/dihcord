@@ -23,7 +23,7 @@ function switchRoom(newRoom) {
   socket.emit("join", { username, room });
 }
 
-/* SEND MESSAGE */
+/* MESSAGE */
 const input = document.getElementById("msgInput");
 
 input.addEventListener("keypress", (e) => {
@@ -60,7 +60,6 @@ gifSearch.addEventListener("input", async () => {
   );
 
   const data = await res.json();
-
   gifResults.innerHTML = "";
 
   data.data.forEach(gif => {
@@ -134,8 +133,39 @@ function addMessage(msg) {
 }
 
 /* =========================
-   OWNER PANEL (K+A+O+S)
+   OWNER PANEL FEATURES
 ========================= */
+
+function closeOwnerPanel() {
+  document.getElementById("ownerPanel").classList.add("hidden");
+}
+
+function clearChat() {
+  document.getElementById("messages").innerHTML = "";
+}
+
+function fakeAnnouncement() {
+  const text = prompt("Announcement:");
+  if (!text) return;
+
+  const div = document.createElement("div");
+  div.className = "system";
+  div.textContent = "📢 " + text;
+  document.getElementById("messages").appendChild(div);
+}
+
+function wipeRoom() {
+  document.getElementById("messages").innerHTML = "";
+}
+
+function kickUser() {
+  const user = document.getElementById("kickUserInput").value;
+  if (!user) return;
+
+  alert(`${user} kicked (visual only)`);
+}
+
+/* OWNER PANEL TRIGGER (K+A+O+S) */
 const requiredKeys = new Set(["k", "a", "o", "s"]);
 const pressedKeys = new Set();
 
@@ -150,16 +180,11 @@ function openOwnerPanel() {
 
 document.addEventListener("keydown", (e) => {
   const key = e.key.toLowerCase();
-
   if (!requiredKeys.has(key)) return;
 
   pressedKeys.add(key);
 
-  if (
-    pressedKeys.size === requiredKeys.size &&
-    !holdTimer &&
-    !ownerUnlocked
-  ) {
+  if (pressedKeys.size === requiredKeys.size && !holdTimer && !ownerUnlocked) {
     holdTimer = setTimeout(() => {
       ownerUnlocked = true;
       openOwnerPanel();
