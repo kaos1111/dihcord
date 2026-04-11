@@ -1,28 +1,73 @@
 body {
   margin: 0;
   font-family: Arial;
-  background: #111;
+  background: #0f0f17;
   color: white;
 }
 
-.hidden { display: none; }
-
-.login {
+/* LOGIN */
+#loginScreen {
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.app {
+.loginBox {
+  background: #161625;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+input, button {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  background: #7c3aed;
+  color: white;
+  cursor: pointer;
+}
+
+/* APP LAYOUT */
+#app {
   display: flex;
   height: 100vh;
 }
 
+.hidden { display: none; }
+
 .sidebar {
+  width: 60px;
+  background: #141422;
+}
+
+.server-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #7c3aed;
+  margin: 20px auto;
+}
+
+.channels {
   width: 200px;
-  background: #1a1a1a;
+  background: #161625;
   padding: 10px;
+}
+
+.channel {
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.channel:hover {
+  background: #2a2a40;
 }
 
 .chat {
@@ -33,34 +78,50 @@ body {
 
 #messages {
   flex: 1;
-  overflow-y: auto;
   padding: 10px;
+  overflow-y: auto;
 }
 
-.input {
+.inputBar {
   display: flex;
   padding: 10px;
+  background: #161625;
 }
 
-#users {
-  width: 150px;
-  background: #1a1a1a;
-}
-
-.gif {
-  position: absolute;
-  bottom: 70px;
-  right: 10px;
-  background: #222;
-  width: 250px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.owner {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: #333;
+.users {
+  width: 180px;
+  background: #141422;
   padding: 10px;
+}
+
+/* OWNER MODAL */
+#ownerModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal {
+  background: #161625;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+/* GIF PANEL */
+#gifPanel {
+  position: absolute;
+  bottom: 80px;
+  left: 220px;
+  width: 300px;
+  background: #161625;
+  border-radius: 12px;
+  padding: 10px;
+  max-height: 400px;
+  overflow-y: auto;
 }
