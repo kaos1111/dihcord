@@ -1,72 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Mini Discord</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-<div id="login">
-  <div class="box">
-    <h1>Mini Discord</h1>
-    <input id="name" placeholder="username" />
-    <button id="enter">Enter</button>
-  </div>
-</div>
+  <div class="login-container">
+    <div class="login-card">
 
-<div id="app" class="hidden">
+      <h1 class="welcome">welcome</h1>
 
-  <div class="sidebar"></div>
+      <input 
+        id="username"
+        type="text" 
+        placeholder="username" 
+        class="input"
+      />
 
-  <div class="channels">
-    <div class="channel" data-room="general"># general</div>
-    <div class="channel" data-room="announcements"># announcements 👑</div>
-  </div>
+      <button class="button" onclick="nextStep()">next</button>
 
-  <div class="chat">
-    <div id="messages"></div>
-
-    <div class="input">
-      <input id="msg" />
-      <button id="send">Send</button>
-      <button id="ownerBtn" class="hidden">OWNER</button>
     </div>
   </div>
 
-  <div class="users">
-    <h3>Users</h3>
-    <div id="users"></div>
-  </div>
-
-</div>
-
-<!-- OWNER PANEL -->
-<div id="ownerPanel" class="hidden">
-  <div class="panel">
-
-    <h2>👑 OWNER PANEL</h2>
-
-    <textarea id="announce" placeholder="Announcement"></textarea>
-    <button id="sendAnnounce">Send Announcement</button>
-
-    <textarea id="broadcast" placeholder="Broadcast message"></textarea>
-    <button id="sendBroadcast">Broadcast All Rooms</button>
-
-    <input id="kickUser" placeholder="Kick username" />
-    <button id="kickBtn">Kick</button>
-
-    <input id="slowRoom" placeholder="room" />
-    <input id="slowMs" placeholder="ms slowmode" />
-    <button id="slowBtn">Set Slowmode</button>
-
-    <input id="clearRoom" placeholder="clear room name" />
-    <button id="clearBtn">Clear Room</button>
-
-    <button id="closeOwner">Close</button>
-  </div>
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="client.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
