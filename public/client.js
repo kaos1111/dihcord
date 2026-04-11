@@ -19,7 +19,9 @@ function switchRoom(r) {
   socket.emit("join", { username, room });
 }
 
-/* MESSAGES */
+/* =========================
+   CHAT INPUT
+========================= */
 const input = document.getElementById("msgInput");
 
 input.addEventListener("keypress", (e) => {
@@ -35,7 +37,9 @@ input.addEventListener("keypress", (e) => {
   }
 });
 
-/* RECEIVE */
+/* =========================
+   RECEIVE
+========================= */
 socket.on("receive-message", addMessage);
 
 socket.on("chat-history", (msgs) => {
@@ -68,7 +72,9 @@ function addMessage(msg) {
   document.getElementById("messages").appendChild(div);
 }
 
-/* GIF PANEL */
+/* =========================
+   GIF PANEL
+========================= */
 function toggleGifPanel() {
   document.getElementById("gifPanel").classList.toggle("hidden");
 }
@@ -77,12 +83,14 @@ function closeGifPanel() {
   document.getElementById("gifPanel").classList.add("hidden");
 }
 
-/* OWNER PANEL */
+/* =========================
+   OWNER PANEL
+========================= */
 function toggleOwnerPanel() {
   document.getElementById("ownerPanel").classList.toggle("hidden");
 }
 
-/* CREATE OWNER BUTTON ON UNLOCK */
+/* Create button ONLY after unlock */
 function createOwnerButton() {
   if (document.getElementById("ownerToggleBtn")) return;
 
@@ -92,35 +100,56 @@ function createOwnerButton() {
   btn.style.position = "absolute";
   btn.style.bottom = "80px";
   btn.style.right = "20px";
+  btn.style.padding = "10px";
+  btn.style.borderRadius = "10px";
+  btn.style.border = "none";
+  btn.style.background = "#6c5ce7";
+  btn.style.color = "white";
+  btn.style.cursor = "pointer";
+
   btn.onclick = toggleOwnerPanel;
 
   document.body.appendChild(btn);
 }
 
-/* KEY COMBO (K+A+O+S) */
-const keys = new Set();
-const required = new Set(["k", "a", "o", "s"]);
-let timer = null;
+/* =========================
+   SECRET UNLOCK (K + A + O + S)
+========================= */
+const requiredKeys = new Set(["k", "a", "o", "s"]);
+const pressedKeys = new Set();
+
+let holdTimer = null;
 let unlocked = false;
 
 document.addEventListener("keydown", (e) => {
-  const k = e.key.toLowerCase();
-  if (!required.has(k)) return;
+  const key = e.key.toLowerCase();
+  if (!requiredKeys.has(key)) return;
 
-  keys.add(k);
+  pressedKeys.add(key);
 
-  if (keys.size === 4 && !timer && !unlocked) {
-    timer = setTimeout(() => {
+  if (
+    pressedKeys.size === requiredKeys.size &&
+    !holdTimer &&
+    !unlocked
+  ) {
+    holdTimer = setTimeout(() => {
       unlocked = true;
+
+      // OPEN PANEL
       document.getElementById("ownerPanel").classList.remove("hidden");
+
+      // ONLY NOW create button
       createOwnerButton();
+
     }, 3000);
   }
 });
 
 document.addEventListener("keyup", (e) => {
-  keys.delete(e.key.toLowerCase());
+  pressedKeys.delete(e.key.toLowerCase());
 
-  clearTimeout(timer);
-  timer = null;
+  if (holdTimer) {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+  }
 });
