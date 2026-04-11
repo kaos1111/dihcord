@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mini Discord</title>
-  <link rel="stylesheet" href="style.css"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mini Discord</title>
+<link rel="stylesheet" href="style.css"/>
 </head>
 
 <body>
@@ -12,8 +12,8 @@
 <!-- LOGIN -->
 <div id="login" class="login">
   <div class="login-box">
-    <h1>Welcome</h1>
-    <input id="usernameInput" placeholder="Enter username"/>
+    <h1>Purple Chat</h1>
+    <input id="usernameInput" placeholder="Username"/>
     <button onclick="enterApp()">Enter</button>
   </div>
 </div>
@@ -21,33 +21,27 @@
 <!-- APP -->
 <div id="app" class="app hidden">
 
-  <div class="sidebar">
-    <div class="server-icon">#</div>
-  </div>
+  <div class="sidebar"></div>
 
   <div class="channels">
     <h3>Channels</h3>
-    <div class="channel active" onclick="switchRoom('general')"># general</div>
-    <div class="channel" onclick="switchRoom('random')"># random</div>
+    <div class="channel" onclick="switchRoom('general')"># general</div>
+    <div class="channel owner-only" onclick="switchRoom('announcements')"># announcements</div>
   </div>
 
   <div class="chat">
 
     <div id="messages" class="messages"></div>
-    <div id="typing"></div>
 
     <div class="input-bar">
       <button onclick="toggleGifPanel()">GIF</button>
-      <input id="msgInput" placeholder="Message..." />
+      <input id="msgInput" placeholder="Message"/>
     </div>
 
-    <!-- GIF PANEL -->
+    <!-- GIF -->
     <div id="gifPanel" class="gif-panel hidden">
-      <div class="gif-header">
-        <input id="gifSearch" placeholder="Search GIFs..."/>
-        <button onclick="closeGifPanel()">✕</button>
-      </div>
-      <div id="gifResults" class="gif-results"></div>
+      <input id="gifSearch" placeholder="Search GIFs"/>
+      <div id="gifResults"></div>
     </div>
 
   </div>
@@ -61,17 +55,10 @@
 
 <!-- OWNER PANEL -->
 <div id="ownerPanel" class="owner-panel hidden">
-  <div class="owner-header">
-    <h2>👑 Owner Panel</h2>
-    <button onclick="toggleOwnerPanel()">✕</button>
-  </div>
+  <h2>👑 Owner Panel</h2>
 
-  <button onclick="clearChat()">Clear Chat</button>
-  <button onclick="wipeRoom()">Wipe Room</button>
-  <button onclick="fakeAnnouncement()">Announcement</button>
-
-  <input id="kickUserInput" placeholder="Kick user"/>
-  <button onclick="kickUser()">Kick</button>
+  <button onclick="sendOwnerMsg()">Send Announcement</button>
+  <button onclick="toggleOwnerPanel()">Close</button>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
