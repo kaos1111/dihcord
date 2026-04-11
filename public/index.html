@@ -53,3 +53,19 @@
 
 </body>
 </html>
+
+<div class="input">
+  <button id="gifBtn" onclick="toggleGifPanel()">GIF</button>
+
+  <input id="msgInput" placeholder="Message..." />
+</div>
+
+<!-- GIF PANEL -->
+<div id="gifPanel" class="gif-panel hidden">
+  <div class="gif-header">
+    <input id="gifSearch" placeholder="Search GIFs..." />
+    <button onclick="closeGifPanel()">✖</button>
+  </div>
+
+  <div id="gifResults" class="gif-results"></div>
+</div>
