@@ -6,22 +6,46 @@ let username = "";
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  document.getElementById("enter").onclick = () => {
-    username = document.getElementById("name").value;
+  // SAFE ELEMENT GETTER
+  const el = (id) => document.getElementById(id);
+
+  const login = el("login");
+  const app = el("app");
+
+  const ownerPanel = el("ownerPanel");
+
+  /* LOGIN */
+  el("enter").onclick = () => {
+    const nameInput = el("name");
+    if (!nameInput || !nameInput.value.trim()) return;
+
+    username = nameInput.value.trim();
     socket.emit("join", username);
 
-    document.getElementById("login").style.display = "none";
-    document.getElementById("app").classList.remove("hidden");
+    login.style.display = "none";
+    app.classList.remove("hidden");
   };
 
-  document.getElementById("send").onclick = send;
+  /* SEND MESSAGE */
+  el("send").onclick = sendMessage;
 
-  function send() {
-    const msg = document.getElementById("msg").value;
-    socket.emit("send-message", { room, text: msg });
-    document.getElementById("msg").value = "";
+  el("msg").addEventListener("keydown", e => {
+    if (e.key === "Enter") sendMessage();
+  });
+
+  function sendMessage() {
+    const input = el("msg");
+    if (!input || !input.value.trim()) return;
+
+    socket.emit("send-message", {
+      room,
+      text: input.value.trim()
+    });
+
+    input.value = "";
   }
 
+  /* CHANNEL SWITCH */
   document.querySelectorAll(".channel").forEach(c => {
     c.onclick = () => {
       room = c.dataset.room;
@@ -29,31 +53,49 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   });
 
+  /* RECEIVE MESSAGE */
   socket.on("receive-message", msg => {
+    const box = el("messages");
+    if (!box) return;
+
     const div = document.createElement("div");
     div.textContent = `${msg.username}: ${msg.text}`;
-    document.getElementById("messages").appendChild(div);
+    box.appendChild(div);
+
+    box.scrollTop = box.scrollHeight;
   });
 
+  /* CHAT HISTORY */
   socket.on("chat-history", msgs => {
-    const box = document.getElementById("messages");
+    const box = el("messages");
+    if (!box) return;
+
     box.innerHTML = "";
+
     msgs.forEach(m => {
-      const d = document.createElement("div");
-      d.textContent = `${m.username}: ${m.text}`;
-      box.appendChild(d);
+      const div = document.createElement("div");
+      div.textContent = `${m.username}: ${m.text}`;
+      box.appendChild(div);
     });
+
+    box.scrollTop = box.scrollHeight;
   });
 
+  /* USER LIST */
   socket.on("user-list", users => {
-    const box = document.getElementById("users");
+    const box = el("users");
+    if (!box) return;
+
     box.innerHTML = "";
+
     users.forEach(u => {
-      box.innerHTML += `<div>${u.isOwner ? "👑" : ""} ${u.username}</div>`;
+      const div = document.createElement("div");
+      div.textContent = u.isOwner ? `👑 ${u.username}` : u.username;
+      box.appendChild(div);
     });
   });
 
-  /* 👑 OWNER UNLOCK */
+  /* 👑 OWNER UNLOCK SYSTEM */
   const keys = new Set();
   let timer = null;
 
@@ -71,40 +113,76 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.addEventListener("keyup", e => {
     keys.delete(e.key.toLowerCase());
-    clearTimeout(timer);
-    timer = null;
+
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
   });
 
+  /* OWNER CONFIRMED */
   socket.on("owner-confirmed", () => {
     owner = true;
-    document.getElementById("ownerPanel").classList.remove("hidden");
+
+    // ✅ FIX: USE active CLASS INSTEAD OF hidden
+    ownerPanel.classList.add("active");
   });
 
   /* OWNER ACTIONS */
-  document.getElementById("sendAnnounce").onclick = () => {
-    socket.emit("owner-message", document.getElementById("announce").value);
+
+  el("sendAnnounce").onclick = () => {
+    const text = el("announce").value.trim();
+    if (!text) return;
+
+    socket.emit("owner-message", text);
+    el("announce").value = "";
   };
 
-  document.getElementById("sendBroadcast").onclick = () => {
-    socket.emit("owner-broadcast", document.getElementById("broadcast").value);
+  el("sendBroadcast").onclick = () => {
+    const text = el("broadcast").value.trim();
+    if (!text) return;
+
+    socket.emit("owner-broadcast", text);
+    el("broadcast").value = "";
   };
 
-  document.getElementById("kickBtn").onclick = () => {
-    socket.emit("owner-kick", document.getElementById("kickUser").value);
+  el("kickBtn").onclick = () => {
+    const target = el("kickUser").value.trim();
+    if (!target) return;
+
+    socket.emit("owner-kick", target);
+    el("kickUser").value = "";
   };
 
-  document.getElementById("slowBtn").onclick = () => {
-    socket.emit("owner-slowmode", {
-      room: document.getElementById("slowRoom").value,
-      ms: Number(document.getElementById("slowMs").value)
-    });
+  el("slowBtn").onclick = () => {
+    const r = el("slowRoom").value.trim();
+    const ms = Number(el("slowMs").value);
+
+    if (!r || isNaN(ms)) return;
+
+    socket.emit("owner-slowmode", { room: r, ms });
+
+    el("slowRoom").value = "";
+    el("slowMs").value = "";
   };
 
-  document.getElementById("clearBtn").onclick = () => {
-    socket.emit("owner-clear", document.getElementById("clearRoom").value);
+  el("clearBtn").onclick = () => {
+    const r = el("clearRoom").value.trim();
+    if (!r) return;
+
+    socket.emit("owner-clear", r);
+    el("clearRoom").value = "";
   };
 
-  document.getElementById("closeOwner").onclick = () => {
-    document.getElementById("ownerPanel").classList.add("hidden");
+  /* CLOSE OWNER PANEL */
+  el("closeOwner").onclick = () => {
+    ownerPanel.classList.remove("active");
   };
+
+  /* 👢 KICK HANDLER */
+  socket.on("kicked", () => {
+    alert("You were kicked by the owner.");
+    location.reload();
+  });
+
 });
