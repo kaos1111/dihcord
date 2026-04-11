@@ -80,14 +80,19 @@ body {
   background: rgba(255,255,255,0.03);
 }
 
-/* OWNER PANEL */
 #ownerPanel {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.6);
-  display: flex;
+
+  display: none; /* ✅ FIX */
   justify-content: center;
   align-items: center;
+}
+
+/* SHOW ONLY WHEN ACTIVE */
+#ownerPanel.active {
+  display: flex;
 }
 
 .panel {
