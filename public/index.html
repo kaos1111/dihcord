@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Mini Discord</title>
+<title>Purple Chat</title>
 <link rel="stylesheet" href="style.css"/>
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN ONLY SCREEN -->
 <div id="login" class="login">
   <div class="login-box">
     <h1>Purple Chat</h1>
@@ -18,7 +18,7 @@
   </div>
 </div>
 
-<!-- APP -->
+<!-- APP (FULL HIDDEN INITIALLY) -->
 <div id="app" class="app hidden">
 
   <div class="sidebar"></div>
@@ -33,14 +33,15 @@
 
     <div id="messages" class="messages"></div>
 
+    <!-- INPUT ONLY INSIDE APP -->
     <div class="input-bar">
       <button onclick="toggleGifPanel()">GIF</button>
       <input id="msgInput" placeholder="Message"/>
     </div>
 
-    <!-- GIF -->
+    <!-- GIF PANEL (ONLY APP) -->
     <div id="gifPanel" class="gif-panel hidden">
-      <input id="gifSearch" placeholder="Search GIFs"/>
+      <input id="gifSearch" placeholder="Search GIFs..."/>
       <div id="gifResults"></div>
     </div>
 
@@ -53,15 +54,15 @@
 
 </div>
 
-<!-- OWNER PANEL -->
+<!-- OWNER PANEL (ALWAYS HIDDEN INITIALLY) -->
 <div id="ownerPanel" class="owner-panel hidden">
   <h2>👑 Owner Panel</h2>
-
-  <button onclick="sendOwnerMsg()">Send Announcement</button>
+  <button onclick="sendOwnerMsg()">Announcement</button>
   <button onclick="toggleOwnerPanel()">Close</button>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="client.js"></script>
+
 </body>
 </html>
