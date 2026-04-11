@@ -3,6 +3,13 @@ const socket = io();
 let username = "";
 let room = "general";
 
+/* FORCE HIDE ON START */
+window.addEventListener("load", () => {
+  const panel = document.getElementById("ownerPanel");
+  if (panel) panel.classList.add("hidden");
+});
+
+/* LOGIN */
 function enterApp() {
   username = document.getElementById("usernameInput").value;
   if (!username) return;
@@ -13,15 +20,14 @@ function enterApp() {
   socket.emit("join", { username, room });
 }
 
+/* SWITCH ROOM */
 function switchRoom(r) {
   room = r;
   document.getElementById("messages").innerHTML = "";
   socket.emit("join", { username, room });
 }
 
-/* =========================
-   CHAT INPUT
-========================= */
+/* CHAT */
 const input = document.getElementById("msgInput");
 
 input.addEventListener("keypress", (e) => {
@@ -37,9 +43,7 @@ input.addEventListener("keypress", (e) => {
   }
 });
 
-/* =========================
-   RECEIVE
-========================= */
+/* RECEIVE */
 socket.on("receive-message", addMessage);
 
 socket.on("chat-history", (msgs) => {
@@ -72,9 +76,7 @@ function addMessage(msg) {
   document.getElementById("messages").appendChild(div);
 }
 
-/* =========================
-   GIF PANEL
-========================= */
+/* GIF */
 function toggleGifPanel() {
   document.getElementById("gifPanel").classList.toggle("hidden");
 }
@@ -83,62 +85,48 @@ function closeGifPanel() {
   document.getElementById("gifPanel").classList.add("hidden");
 }
 
-/* =========================
-   OWNER PANEL
-========================= */
+/* OWNER PANEL */
 function toggleOwnerPanel() {
   document.getElementById("ownerPanel").classList.toggle("hidden");
 }
 
-/* Create button ONLY after unlock */
+/* OWNER BUTTON */
 function createOwnerButton() {
   if (document.getElementById("ownerToggleBtn")) return;
 
   const btn = document.createElement("button");
   btn.id = "ownerToggleBtn";
   btn.innerText = "👑 Owner";
+
   btn.style.position = "absolute";
   btn.style.bottom = "80px";
   btn.style.right = "20px";
-  btn.style.padding = "10px";
-  btn.style.borderRadius = "10px";
-  btn.style.border = "none";
-  btn.style.background = "#6c5ce7";
-  btn.style.color = "white";
-  btn.style.cursor = "pointer";
 
   btn.onclick = toggleOwnerPanel;
 
   document.body.appendChild(btn);
 }
 
-/* =========================
-   SECRET UNLOCK (K + A + O + S)
-========================= */
-const requiredKeys = new Set(["k", "a", "o", "s"]);
-const pressedKeys = new Set();
+/* SECRET KEYS */
+const keys = new Set();
+const required = new Set(["k", "a", "o", "s"]);
 
-let holdTimer = null;
+let timer = null;
 let unlocked = false;
 
 document.addEventListener("keydown", (e) => {
-  const key = e.key.toLowerCase();
-  if (!requiredKeys.has(key)) return;
+  const k = e.key.toLowerCase();
+  if (!required.has(k)) return;
 
-  pressedKeys.add(key);
+  keys.add(k);
 
-  if (
-    pressedKeys.size === requiredKeys.size &&
-    !holdTimer &&
-    !unlocked
-  ) {
-    holdTimer = setTimeout(() => {
+  if (keys.size === 4 && !timer && !unlocked) {
+    timer = setTimeout(() => {
       unlocked = true;
 
-      // OPEN PANEL
-      document.getElementById("ownerPanel").classList.remove("hidden");
+      const panel = document.getElementById("ownerPanel");
+      panel.classList.remove("hidden");
 
-      // ONLY NOW create button
       createOwnerButton();
 
     }, 3000);
@@ -146,10 +134,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 document.addEventListener("keyup", (e) => {
-  pressedKeys.delete(e.key.toLowerCase());
-
-  if (holdTimer) {
-    clearTimeout(holdTimer);
-    holdTimer = null;
-  }
+  keys.delete(e.key.toLowerCase());
+  clearTimeout(timer);
+  timer = null;
 });
