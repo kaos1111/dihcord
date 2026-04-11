@@ -38,6 +38,7 @@
       <input id="msgInput" placeholder="Message..." />
     </div>
 
+    <!-- GIF PANEL -->
     <div id="gifPanel" class="gif-panel hidden">
       <div class="gif-header">
         <input id="gifSearch" placeholder="Search GIFs..." />
@@ -57,8 +58,21 @@
 
 <!-- OWNER PANEL -->
 <div id="ownerPanel" class="owner-panel hidden">
-  <h2>Owner Panel</h2>
-  <p>Welcome, owner.</p>
+  <div class="owner-header">
+    <h2>👑 Owner Panel</h2>
+    <button onclick="closeOwnerPanel()">✖</button>
+  </div>
+
+  <div class="owner-buttons">
+    <button onclick="clearChat()">🧹 Clear Chat</button>
+    <button onclick="wipeRoom()">💥 Wipe Room</button>
+    <button onclick="fakeAnnouncement()">📢 Announcement</button>
+  </div>
+
+  <div class="owner-kick">
+    <input id="kickUserInput" placeholder="Kick username..." />
+    <button onclick="kickUser()">Kick</button>
+  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
