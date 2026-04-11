@@ -10,21 +10,35 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static("public"));
 
+/* =========================
+   STORAGE
+========================= */
 const messages = {
   general: [],
-  random: []
+  announcements: []
 };
 
 const users = {
   general: {},
-  random: {}
+  announcements: {}
 };
+
+/* =========================
+   OWNER SYSTEM
+========================= */
+const owners = new Set(); // socket.id
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
   socket.on("join", ({ username, room }) => {
     socket.username = username;
+
+    // ONLY allow announcements if owner
+    if (room === "announcements" && !owners.has(socket.id)) {
+      room = "general";
+    }
+
     socket.room = room;
 
     if (!users[room]) users[room] = {};
@@ -42,33 +56,54 @@ io.on("connection", (socket) => {
     });
   });
 
+  /* MESSAGE */
   socket.on("send-message", (msg) => {
     const room = socket.room;
     if (!room) return;
 
     const message = {
-      type: msg.type || "text",
-      user: socket.username || "Anonymous",
-      time: new Date().toLocaleTimeString(),
+      user: socket.username,
       text: msg.text || "",
-      url: msg.url || null
+      type: msg.type || "text",
+      url: msg.url || null,
+      time: new Date().toLocaleTimeString()
     };
 
+    if (!messages[room]) messages[room] = [];
     messages[room].push(message);
+
     if (messages[room].length > 200) messages[room].shift();
 
     io.to(room).emit("receive-message", message);
   });
 
-  socket.on("typing", () => {
-    if (socket.room) {
-      socket.to(socket.room).emit("typing", socket.username);
-    }
+  /* OWNER UNLOCK */
+  socket.on("owner-unlock", () => {
+    owners.add(socket.id);
+    socket.emit("owner-status", true);
+    console.log(`${socket.username} is OWNER`);
   });
 
-  socket.on("disconnect", () => {
-    const room = socket.room;
+  /* OWNER ANNOUNCEMENT */
+  socket.on("owner-message", (text) => {
+    if (!owners.has(socket.id)) return;
 
+    const message = {
+      user: "👑 OWNER",
+      text,
+      type: "text",
+      time: new Date().toLocaleTimeString()
+    };
+
+    messages.announcements.push(message);
+    io.to("announcements").emit("receive-message", message);
+  });
+
+  /* DISCONNECT */
+  socket.on("disconnect", () => {
+    delete owners[socket.id];
+
+    const room = socket.room;
     if (room && users[room]) {
       delete users[room][socket.id];
 
