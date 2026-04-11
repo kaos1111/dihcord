@@ -1,58 +1,85 @@
 const socket = io();
 
-// Ask username
-let username = prompt("Enter your username:");
-socket.emit("set-username", username);
+let username = "";
+let room = "general";
 
-const messagesDiv = document.getElementById("messages");
-const usersList = document.getElementById("users");
-const input = document.getElementById("messageInput");
+// LOGIN
+function enterApp() {
+  username = document.getElementById("usernameInput").value;
+  if (!username) return;
 
-// Send message
-function sendMessage() {
-  const msg = input.value;
-  if (!msg.trim()) return;
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
 
-  socket.emit("send-message", msg);
-  input.value = "";
+  socket.emit("join", { username, room });
 }
 
-// Enter key
+// SWITCH ROOM
+function switchRoom(newRoom) {
+  room = newRoom;
+  document.getElementById("messages").innerHTML = "";
+  socket.emit("join", { username, room });
+}
+
+// SEND MESSAGE
+const input = document.getElementById("msgInput");
+
 input.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") sendMessage();
+  socket.emit("typing");
+
+  if (e.key === "Enter") {
+    socket.emit("send-message", input.value);
+    input.value = "";
+  }
 });
 
-// Chat history
-socket.on("chat-history", (messages) => {
-  messages.forEach(addMessage);
+// RECEIVE HISTORY
+socket.on("chat-history", (msgs) => {
+  document.getElementById("messages").innerHTML = "";
+  msgs.forEach(addMessage);
 });
 
-// New message
-socket.on("receive-message", (msg) => {
-  addMessage(msg);
+// RECEIVE MESSAGE
+socket.on("receive-message", addMessage);
+
+// SYSTEM MESSAGE
+socket.on("system-message", (msg) => {
+  const div = document.createElement("div");
+  div.className = "system";
+  div.textContent = msg.text;
+  document.getElementById("messages").appendChild(div);
 });
 
-// User list
+// USER LIST
 socket.on("user-list", (users) => {
-  usersList.innerHTML = "";
-  users.forEach((u) => {
-    const li = document.createElement("li");
-    li.textContent = u;
-    usersList.appendChild(li);
+  const list = document.getElementById("userList");
+  list.innerHTML = "";
+  users.forEach(u => {
+    const div = document.createElement("div");
+    div.textContent = u;
+    list.appendChild(div);
   });
 });
 
-// Render message
+// TYPING
+socket.on("typing", (user) => {
+  const typing = document.getElementById("typing");
+  typing.textContent = `${user} is typing...`;
+
+  setTimeout(() => typing.textContent = "", 1000);
+});
+
+// ADD MESSAGE
 function addMessage(msg) {
   const div = document.createElement("div");
   div.className = "message";
-
   div.innerHTML = `
-    <div><strong>${msg.user}</strong></div>
-    <div>${msg.text}</div>
-    <div class="meta">${msg.time}</div>
+    <b>${msg.user}</b><br>
+    ${msg.text}<br>
+    <small>${msg.time}</small>
   `;
+  document.getElementById("messages").appendChild(div);
 
-  messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  document.getElementById("messages").scrollTop =
+    document.getElementById("messages").scrollHeight;
 }
