@@ -15,32 +15,22 @@ const messages = {
   announcements: []
 };
 
-const users = {
-  general: {},
-  announcements: {}
-};
+const users = {};
 
 const owners = new Set();
 
 io.on("connection", (socket) => {
-  console.log("Connected:", socket.id);
-
   socket.on("join", ({ username, room }) => {
     socket.username = username;
-
-    if (room === "announcements" && !owners.has(socket.id)) {
-      room = "general";
-    }
-
     socket.room = room;
+
+    socket.join(room);
 
     if (!users[room]) users[room] = {};
     users[room][socket.id] = username;
 
-    socket.join(room);
-
     socket.emit("chat-history", messages[room] || []);
-    updateUsers(room);
+    io.to(room).emit("user-list", Object.values(users[room]));
   });
 
   socket.on("send-message", (msg) => {
@@ -50,6 +40,8 @@ io.on("connection", (socket) => {
     const message = {
       user: socket.username,
       text: msg.text || "",
+      type: msg.type || "text",
+      url: msg.url || null,
       time: new Date().toLocaleTimeString()
     };
 
@@ -75,20 +67,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    delete owners[socket.id];
-
     const room = socket.room;
-    if (room && users[room]) {
+    if (users[room]) {
       delete users[room][socket.id];
-      updateUsers(room);
+      io.to(room).emit("user-list", Object.values(users[room]));
     }
   });
-
-  function updateUsers(room) {
-    io.to(room).emit("user-list", Object.values(users[room] || {}));
-  }
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on ${PORT}`);
-});
+server.listen(PORT, () => console.log("Running on", PORT));
