@@ -12,28 +12,25 @@
 <!-- LOGIN -->
 <div id="login" class="login">
   <div class="login-box">
-    <h1>Welcome Back</h1>
+    <h1>Welcome</h1>
     <input id="usernameInput" placeholder="Enter username"/>
-    <button onclick="enterApp()">Enter Chat</button>
+    <button onclick="enterApp()">Enter</button>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app" class="app hidden">
 
-  <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="server-icon">#</div>
   </div>
 
-  <!-- CHANNELS -->
   <div class="channels">
     <h3>Channels</h3>
     <div class="channel active" onclick="switchRoom('general')"># general</div>
     <div class="channel" onclick="switchRoom('random')"># random</div>
   </div>
 
-  <!-- CHAT -->
   <div class="chat">
 
     <div id="messages" class="messages"></div>
@@ -53,12 +50,8 @@
       <div id="gifResults" class="gif-results"></div>
     </div>
 
-    <!-- OWNER BUTTON (auto created) -->
-    <div id="ownerBtnContainer"></div>
-
   </div>
 
-  <!-- USERS -->
   <div class="users">
     <h3>Online</h3>
     <div id="userList"></div>
