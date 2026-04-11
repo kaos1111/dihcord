@@ -61,7 +61,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("typing", () => {
-    if (socket.room) socket.to(socket.room).emit("typing", socket.username);
+    if (socket.room) {
+      socket.to(socket.room).emit("typing", socket.username);
+    }
   });
 
   socket.on("disconnect", () => {
