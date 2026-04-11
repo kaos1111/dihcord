@@ -1,188 +1,166 @@
 const socket = io();
 
-let room = "general";
-let owner = false;
 let username = "";
+let room = "general";
 
-document.addEventListener("DOMContentLoaded", () => {
+// 🔑 Giphy API Key (replace this)
+const GIPHY_API_KEY = "OU2xZQ6AXcETFTcyKX3Vd0pf5HB7wwFd";
 
-  // SAFE ELEMENT GETTER
-  const el = (id) => document.getElementById(id);
+/* =========================
+   LOGIN
+========================= */
+function enterApp() {
+  username = document.getElementById("usernameInput").value;
 
-  const login = el("login");
-  const app = el("app");
+  if (!username) return;
 
-  const ownerPanel = el("ownerPanel");
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
 
-  /* LOGIN */
-  el("enter").onclick = () => {
-    const nameInput = el("name");
-    if (!nameInput || !nameInput.value.trim()) return;
+  socket.emit("join", { username, room });
+}
 
-    username = nameInput.value.trim();
-    socket.emit("join", username);
+/* =========================
+   SWITCH ROOMS
+========================= */
+function switchRoom(newRoom) {
+  room = newRoom;
+  document.getElementById("messages").innerHTML = "";
+  socket.emit("join", { username, room });
+}
 
-    login.style.display = "none";
-    app.classList.remove("hidden");
-  };
+/* =========================
+   INPUT + SEND
+========================= */
+const input = document.getElementById("msgInput");
 
-  /* SEND MESSAGE */
-  el("send").onclick = sendMessage;
+input.addEventListener("keypress", (e) => {
+  socket.emit("typing");
 
-  el("msg").addEventListener("keydown", e => {
-    if (e.key === "Enter") sendMessage();
-  });
+  if (e.key === "Enter") {
+    const text = input.value;
+    if (!text.trim()) return;
 
-  function sendMessage() {
-    const input = el("msg");
-    if (!input || !input.value.trim()) return;
-
-    socket.emit("send-message", {
-      room,
-      text: input.value.trim()
-    });
+    // 🎬 GIF COMMAND
+    if (text.startsWith("/gif ")) {
+      const query = text.replace("/gif ", "");
+      sendGif(query);
+    } 
+    else {
+      socket.emit("send-message", {
+        type: "text",
+        text: text,
+        user: username,
+        time: new Date().toLocaleTimeString()
+      });
+    }
 
     input.value = "";
   }
-
-  /* CHANNEL SWITCH */
-  document.querySelectorAll(".channel").forEach(c => {
-    c.onclick = () => {
-      room = c.dataset.room;
-      socket.emit("join-room", room);
-    };
-  });
-
-  /* RECEIVE MESSAGE */
-  socket.on("receive-message", msg => {
-    const box = el("messages");
-    if (!box) return;
-
-    const div = document.createElement("div");
-    div.textContent = `${msg.username}: ${msg.text}`;
-    box.appendChild(div);
-
-    box.scrollTop = box.scrollHeight;
-  });
-
-  /* CHAT HISTORY */
-  socket.on("chat-history", msgs => {
-    const box = el("messages");
-    if (!box) return;
-
-    box.innerHTML = "";
-
-    msgs.forEach(m => {
-      const div = document.createElement("div");
-      div.textContent = `${m.username}: ${m.text}`;
-      box.appendChild(div);
-    });
-
-    box.scrollTop = box.scrollHeight;
-  });
-
-  /* USER LIST */
-  socket.on("user-list", users => {
-    const box = el("users");
-    if (!box) return;
-
-    box.innerHTML = "";
-
-    users.forEach(u => {
-      const div = document.createElement("div");
-      div.textContent = u.isOwner ? `👑 ${u.username}` : u.username;
-      box.appendChild(div);
-    });
-  });
-
-  /* 👑 OWNER UNLOCK SYSTEM */
-  const keys = new Set();
-  let timer = null;
-
-  document.addEventListener("keydown", e => {
-    keys.add(e.key.toLowerCase());
-
-    if (["k","a","o","s"].every(k => keys.has(k))) {
-      if (!timer) {
-        timer = setTimeout(() => {
-          socket.emit("owner-unlock");
-        }, 3000);
-      }
-    }
-  });
-
-  document.addEventListener("keyup", e => {
-    keys.delete(e.key.toLowerCase());
-
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-  });
-
-  /* OWNER CONFIRMED */
-  socket.on("owner-confirmed", () => {
-    owner = true;
-
-    // ✅ FIX: USE active CLASS INSTEAD OF hidden
-    ownerPanel.classList.add("active");
-  });
-
-  /* OWNER ACTIONS */
-
-  el("sendAnnounce").onclick = () => {
-    const text = el("announce").value.trim();
-    if (!text) return;
-
-    socket.emit("owner-message", text);
-    el("announce").value = "";
-  };
-
-  el("sendBroadcast").onclick = () => {
-    const text = el("broadcast").value.trim();
-    if (!text) return;
-
-    socket.emit("owner-broadcast", text);
-    el("broadcast").value = "";
-  };
-
-  el("kickBtn").onclick = () => {
-    const target = el("kickUser").value.trim();
-    if (!target) return;
-
-    socket.emit("owner-kick", target);
-    el("kickUser").value = "";
-  };
-
-  el("slowBtn").onclick = () => {
-    const r = el("slowRoom").value.trim();
-    const ms = Number(el("slowMs").value);
-
-    if (!r || isNaN(ms)) return;
-
-    socket.emit("owner-slowmode", { room: r, ms });
-
-    el("slowRoom").value = "";
-    el("slowMs").value = "";
-  };
-
-  el("clearBtn").onclick = () => {
-    const r = el("clearRoom").value.trim();
-    if (!r) return;
-
-    socket.emit("owner-clear", r);
-    el("clearRoom").value = "";
-  };
-
-  /* CLOSE OWNER PANEL */
-  el("closeOwner").onclick = () => {
-    ownerPanel.classList.remove("active");
-  };
-
-  /* 👢 KICK HANDLER */
-  socket.on("kicked", () => {
-    alert("You were kicked by the owner.");
-    location.reload();
-  });
-
 });
+
+/* =========================
+   GIF FUNCTION (GIPHY)
+========================= */
+async function sendGif(query) {
+  try {
+    const res = await fetch(
+      `https://api.giphy.com/v1/gifs/search?q=${encodeURIComponent(query)}&api_key=${GIPHY_API_KEY}&limit=1`
+    );
+
+    const data = await res.json();
+
+    if (data.data.length > 0) {
+      const gifUrl = data.data[0].images.fixed_width.url;
+
+      socket.emit("send-message", {
+        type: "gif",
+        url: gifUrl,
+        user: username,
+        time: new Date().toLocaleTimeString()
+      });
+    }
+  } catch (err) {
+    console.error("GIF error:", err);
+  }
+}
+
+/* =========================
+   RECEIVE HISTORY
+========================= */
+socket.on("chat-history", (msgs) => {
+  document.getElementById("messages").innerHTML = "";
+  msgs.forEach(addMessage);
+});
+
+/* =========================
+   RECEIVE MESSAGE
+========================= */
+socket.on("receive-message", addMessage);
+
+/* =========================
+   SYSTEM MESSAGES
+========================= */
+socket.on("system-message", (msg) => {
+  const div = document.createElement("div");
+  div.className = "system";
+  div.textContent = msg.text;
+
+  document.getElementById("messages").appendChild(div);
+});
+
+/* =========================
+   USERS LIST
+========================= */
+socket.on("user-list", (users) => {
+  const list = document.getElementById("userList");
+  list.innerHTML = "";
+
+  users.forEach((u) => {
+    const div = document.createElement("div");
+    div.textContent = u;
+    list.appendChild(div);
+  });
+});
+
+/* =========================
+   TYPING INDICATOR
+========================= */
+socket.on("typing", (user) => {
+  const typing = document.getElementById("typing");
+  typing.textContent = `${user} is typing...`;
+
+  setTimeout(() => {
+    typing.textContent = "";
+  }, 1000);
+});
+
+/* =========================
+   RENDER MESSAGE
+========================= */
+function addMessage(msg) {
+  const div = document.createElement("div");
+  div.className = "message";
+
+  // GIF message
+  if (msg.type === "gif") {
+    div.innerHTML = `
+      <b>${msg.user}</b><br>
+      <img src="${msg.url}" style="max-width:200px;border-radius:12px;"><br>
+      <small>${msg.time}</small>
+    `;
+  }
+  // TEXT message
+  else {
+    div.innerHTML = `
+      <b>${msg.user}</b><br>
+      ${msg.text}<br>
+      <small>${msg.time}</small>
+    `;
+  }
+
+  const messagesDiv = document.getElementById("messages");
+  messagesDiv.appendChild(div);
+
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
