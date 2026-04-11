@@ -3,7 +3,7 @@ const socket = io();
 let username = "";
 let room = "general";
 
-const GIPHY_API_KEY = "OU2xZQ6AXcETFTcyKX3Vd0pf5HB7wwFd";
+const GIPHY_API_KEY = "OU2xZQ6AXcETFTcyXK3Vd0pf5HB7wwFd";
 
 /* LOGIN */
 function enterApp() {
@@ -39,7 +39,7 @@ input.addEventListener("keypress", (e) => {
   }
 });
 
-/* GIF PANEL */
+/* GIF */
 function toggleGifPanel() {
   document.getElementById("gifPanel").classList.toggle("hidden");
 }
@@ -48,7 +48,6 @@ function closeGifPanel() {
   document.getElementById("gifPanel").classList.add("hidden");
 }
 
-/* GIF SEARCH */
 const gifSearch = document.getElementById("gifSearch");
 const gifResults = document.getElementById("gifResults");
 
@@ -113,7 +112,6 @@ socket.on("typing", (user) => {
   setTimeout(() => t.textContent = "", 1000);
 });
 
-/* RENDER */
 function addMessage(msg) {
   const div = document.createElement("div");
   div.className = "message";
@@ -134,3 +132,47 @@ function addMessage(msg) {
 
   document.getElementById("messages").appendChild(div);
 }
+
+/* =========================
+   OWNER PANEL (K+A+O+S)
+========================= */
+const requiredKeys = new Set(["k", "a", "o", "s"]);
+const pressedKeys = new Set();
+
+let holdTimer = null;
+let ownerUnlocked = false;
+
+const ownerPanel = document.getElementById("ownerPanel");
+
+function openOwnerPanel() {
+  ownerPanel.classList.remove("hidden");
+}
+
+document.addEventListener("keydown", (e) => {
+  const key = e.key.toLowerCase();
+
+  if (!requiredKeys.has(key)) return;
+
+  pressedKeys.add(key);
+
+  if (
+    pressedKeys.size === requiredKeys.size &&
+    !holdTimer &&
+    !ownerUnlocked
+  ) {
+    holdTimer = setTimeout(() => {
+      ownerUnlocked = true;
+      openOwnerPanel();
+    }, 3000);
+  }
+});
+
+document.addEventListener("keyup", (e) => {
+  const key = e.key.toLowerCase();
+  pressedKeys.delete(key);
+
+  if (holdTimer) {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+  }
+});
