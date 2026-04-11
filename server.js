@@ -11,30 +11,30 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static("public"));
 
 /* =========================
-   MEMORY STORAGE
+   STORAGE
 ========================= */
 const messages = {
   general: [],
   random: []
 };
 
-// room-based users (FIXED)
 const users = {
   general: {},
   random: {}
 };
 
 /* =========================
-   SOCKET LOGIC
+   SOCKET.IO
 ========================= */
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  /* JOIN ROOM */
+  /* JOIN */
   socket.on("join", ({ username, room }) => {
     socket.username = username;
     socket.room = room;
 
+    if (!users[room]) users[room] = {};
     users[room][socket.id] = username;
 
     socket.join(room);
@@ -49,7 +49,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  /* SEND MESSAGE */
+  /* MESSAGE */
   socket.on("send-message", (msg) => {
     const room = socket.room;
     if (!room) return;
@@ -74,10 +74,12 @@ io.on("connection", (socket) => {
 
   /* TYPING */
   socket.on("typing", () => {
-    socket.to(socket.room).emit("typing", socket.username);
+    if (socket.room) {
+      socket.to(socket.room).emit("typing", socket.username);
+    }
   });
 
-  /* OWNER AUTH (SECURE) */
+  /* OWNER AUTH (OPTIONAL SERVER SECURITY) */
   socket.on("owner-auth", ({ password }) => {
     if (password === "CHANGE_THIS_SECRET") {
       socket.emit("owner-granted");
@@ -89,14 +91,14 @@ io.on("connection", (socket) => {
   /* DISCONNECT */
   socket.on("disconnect", () => {
     const room = socket.room;
-    const username = socket.username;
 
     if (room && users[room]) {
       delete users[room][socket.id];
+
       updateUsers(room);
 
       socket.to(room).emit("system-message", {
-        text: `${username || "Someone"} left`,
+        text: `${socket.username || "Someone"} left`,
         time: new Date().toLocaleTimeString()
       });
     }
@@ -108,6 +110,9 @@ io.on("connection", (socket) => {
   }
 });
 
+/* =========================
+   START SERVER
+========================= */
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
