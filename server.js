@@ -1,12 +1,3 @@
-// 🔥 CRASH LOGGING (VERY IMPORTANT FOR RAILWAY)
-process.on("uncaughtException", err => {
-  console.error("UNCAUGHT EXCEPTION:", err);
-});
-
-process.on("unhandledRejection", err => {
-  console.error("UNHANDLED REJECTION:", err);
-});
-
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -15,190 +6,116 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// ✅ REQUIRED FOR STATIC FILES
+const PORT = process.env.PORT || 3000;
+
 app.use(express.static("public"));
 
-// ✅ HEALTH CHECK (prevents Railway timeout)
-app.get("/health", (req, res) => {
-  res.send("OK");
-});
-
-const ROOMS = ["general", "announcements"];
-
-const state = {
-  messages: {
-    general: [],
-    announcements: []
-  },
-  users: {}
+/* =========================
+   MEMORY STORAGE
+========================= */
+const messages = {
+  general: [],
+  random: []
 };
 
-const slowMode = {
-  general: 0,
-  announcements: 0
-};
+const users = {}; // socket.id -> username
 
-function push(room, msg) {
-  if (!state.messages[room]) state.messages[room] = [];
-  state.messages[room].push(msg);
-  if (state.messages[room].length > 200) {
-    state.messages[room].shift();
-  }
-}
-
-function emitUsers(room) {
-  const users = Object.values(state.users)
-    .filter(u => u.room === room)
-    .map(u => ({
-      username: u.username,
-      isOwner: u.isOwner
-    }));
-
-  io.to(room).emit("user-list", users);
-}
-
+/* =========================
+   SOCKET LOGIC
+========================= */
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("join", (username) => {
-    state.users[socket.id] = {
-      username,
-      room: "general",
-      isOwner: false,
-      lastMsg: 0
-    };
+  /* JOIN ROOM */
+  socket.on("join", ({ username, room }) => {
+    users[socket.id] = username;
 
-    socket.join("general");
-
-    socket.emit("chat-history", state.messages.general);
-    emitUsers("general");
-  });
-
-  socket.on("join-room", (room) => {
-    const user = state.users[socket.id];
-    if (!user) return;
-
-    socket.leave(user.room);
-    user.room = room;
     socket.join(room);
+    socket.room = room;
 
-    socket.emit("chat-history", state.messages[room]);
-    emitUsers(room);
-  });
+    // send chat history for room
+    socket.emit("chat-history", messages[room] || []);
 
-  socket.on("send-message", ({ room, text }) => {
-    const user = state.users[socket.id];
-    if (!user) return;
+    // update user list
+    updateUsers(room);
 
-    const now = Date.now();
-
-    // 🐢 SLOW MODE ENFORCED SERVER-SIDE
-    if (now - user.lastMsg < slowMode[room]) return;
-
-    user.lastMsg = now;
-
-    const msg = {
-      username: user.username,
-      text,
-      time: now
-    };
-
-    push(room, msg);
-    io.to(room).emit("receive-message", msg);
-  });
-
-  // 👑 OWNER UNLOCK (SECURE)
-  socket.on("owner-unlock", () => {
-    const user = state.users[socket.id];
-    if (!user) return;
-
-    user.isOwner = true;
-    socket.emit("owner-confirmed");
-    emitUsers(user.room);
-  });
-
-  // 📢 OWNER ANNOUNCEMENTS ONLY
-  socket.on("owner-message", (text) => {
-    const user = state.users[socket.id];
-    if (!user || !user.isOwner) return;
-
-    const msg = {
-      username: "👑 OWNER",
-      text,
-      time: Date.now()
-    };
-
-    push("announcements", msg);
-    io.to("announcements").emit("receive-message", msg);
-  });
-
-  // 🌐 BROADCAST
-  socket.on("owner-broadcast", (text) => {
-    const user = state.users[socket.id];
-    if (!user || !user.isOwner) return;
-
-    const msg = {
-      username: "📢 BROADCAST",
-      text,
-      time: Date.now()
-    };
-
-    ROOMS.forEach(room => {
-      push(room, msg);
-      io.to(room).emit("receive-message", msg);
+    // system message
+    socket.to(room).emit("system-message", {
+      text: `${username} joined #${room}`,
+      time: new Date().toLocaleTimeString()
     });
   });
 
-  // 🧹 CLEAR ROOM
-  socket.on("owner-clear", (room) => {
-    const user = state.users[socket.id];
-    if (!user || !user.isOwner) return;
+  /* =========================
+     SEND MESSAGE (OBJECT SUPPORT)
+  ========================= */
+  socket.on("send-message", (msg) => {
+    const room = socket.room;
 
-    state.messages[room] = [];
-    io.to(room).emit("chat-history", []);
+    // normalize message (IMPORTANT)
+    const message = {
+      type: msg.type || "text",
+      user: users[socket.id] || "Anonymous",
+      time: new Date().toLocaleTimeString(),
+
+      // text message
+      text: msg.text || "",
+
+      // gif message
+      url: msg.url || null
+    };
+
+    // store message
+    if (!messages[room]) messages[room] = [];
+    messages[room].push(message);
+
+    // limit memory
+    if (messages[room].length > 200) {
+      messages[room].shift();
+    }
+
+    // broadcast
+    io.to(room).emit("receive-message", message);
   });
 
-  // 👢 KICK USER
-  socket.on("owner-kick", (targetName) => {
-    const user = state.users[socket.id];
-    if (!user || !user.isOwner) return;
+  /* =========================
+     TYPING
+  ========================= */
+  socket.on("typing", () => {
+    socket.to(socket.room).emit("typing", users[socket.id]);
+  });
 
-    for (let id in state.users) {
-      if (state.users[id].username === targetName) {
-        io.to(id).emit("kicked");
-        const sock = io.sockets.sockets.get(id);
-        if (sock) sock.disconnect();
-      }
+  /* =========================
+     DISCONNECT
+  ========================= */
+  socket.on("disconnect", () => {
+    const room = socket.room;
+    const username = users[socket.id];
+
+    delete users[socket.id];
+
+    if (room) {
+      updateUsers(room);
+
+      socket.to(room).emit("system-message", {
+        text: `${username} left`,
+        time: new Date().toLocaleTimeString()
+      });
     }
   });
 
-  // 🐢 SET SLOW MODE
-  socket.on("owner-slowmode", ({ room, ms }) => {
-    const user = state.users[socket.id];
-    if (!user || !user.isOwner) return;
-
-    slowMode[room] = ms;
-  });
-
-  socket.on("disconnect", () => {
-    const user = state.users[socket.id];
-    if (!user) return;
-
-    delete state.users[socket.id];
-
-    io.to(user.room).emit("receive-message", {
-      username: "System",
-      text: `${user.username} left`,
-      time: Date.now()
-    });
-
-    emitUsers(user.room);
-  });
+  /* =========================
+     UPDATE USERS LIST
+  ========================= */
+  function updateUsers(room) {
+    const roomUsers = Object.values(users);
+    io.to(room).emit("user-list", roomUsers);
+  }
 });
 
-// 🚀 RAILWAY FIX (MOST IMPORTANT LINE)
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, "0.0.0.0", () => {
-  console.log("✅ Server running on port", PORT);
+/* =========================
+   START SERVER
+========================= */
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
