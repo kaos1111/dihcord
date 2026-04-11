@@ -1,63 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Mini Discord</title>
+<title>Chat</title>
 <link rel="stylesheet" href="style.css"/>
 </head>
 
 <body>
 
-<!-- LOGIN -->
 <div id="login" class="login">
-  <h2>Welcome Back</h2>
-  <input id="usernameInput" placeholder="Enter username"/>
-  <button onclick="enterApp()">Enter</button>
+  <input id="usernameInput" placeholder="username"/>
+  <button onclick="enterApp()">enter</button>
 </div>
 
-<!-- APP -->
 <div id="app" class="app hidden">
 
-  <div class="servers">
-    <div class="server">#</div>
-  </div>
-
-  <div class="channels">
-    <h3>TEXT CHANNELS</h3>
-    <div class="channel active" onclick="switchRoom('general')"># general</div>
-    <div class="channel" onclick="switchRoom('announcements')"># announcements</div>
+  <div class="sidebar">
+    <div onclick="switchRoom('general')">general</div>
+    <div onclick="switchRoom('announcements')">announcements</div>
   </div>
 
   <div class="chat">
-
-    <div id="messages" class="messages"></div>
+    <div id="messages"></div>
 
     <div class="input">
-      <button onclick="toggleGifPanel()">GIF</button>
-      <input id="msgInput" placeholder="Message..."/>
+      <button onclick="toggleGif()">GIF</button>
+      <input id="msgInput"/>
     </div>
 
-    <!-- GIF PANEL -->
-    <div id="gifPanel" class="gif-panel hidden">
-      <input id="gifSearch" placeholder="Search GIFs..."/>
+    <div id="gifPanel" class="gif hidden">
+      <input id="gifSearch"/>
       <div id="gifResults"></div>
     </div>
-
   </div>
 
-  <div class="users">
-    <h3>ONLINE</h3>
-    <div id="userList"></div>
-  </div>
-
+  <div id="users"></div>
 </div>
 
-<!-- OWNER PANEL -->
-<div id="ownerPanel" class="owner-panel hidden">
-  <h3>Owner Panel</h3>
-  <button onclick="sendOwnerMsg()">Announcement</button>
-  <button onclick="toggleOwnerPanel()">Close</button>
+<div id="ownerPanel" class="owner hidden">
+  <button onclick="sendOwner()">announce</button>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
