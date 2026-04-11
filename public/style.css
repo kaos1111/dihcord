@@ -1,39 +1,28 @@
 body {
   margin: 0;
   font-family: Arial;
-  background: #0f0f17;
   color: white;
+
+  background: radial-gradient(circle at top left, rgba(124,58,237,0.18), transparent 40%),
+              linear-gradient(180deg, #07070d, #0f0f17);
 }
 
 /* LOGIN */
-#loginScreen {
+#login {
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.loginBox {
-  background: #161625;
-  padding: 30px;
-  border-radius: 12px;
-  text-align: center;
+.box {
+  background: rgba(255,255,255,0.04);
+  padding: 25px;
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
 }
 
-input, button {
-  padding: 10px;
-  margin: 5px;
-  border-radius: 8px;
-  border: none;
-}
-
-button {
-  background: #7c3aed;
-  color: white;
-  cursor: pointer;
-}
-
-/* APP LAYOUT */
+/* LAYOUT */
 #app {
   display: flex;
   height: 100vh;
@@ -43,31 +32,22 @@ button {
 
 .sidebar {
   width: 60px;
-  background: #141422;
-}
-
-.server-dot {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #7c3aed;
-  margin: 20px auto;
+  background: rgba(255,255,255,0.03);
 }
 
 .channels {
   width: 200px;
-  background: #161625;
-  padding: 10px;
+  background: rgba(255,255,255,0.03);
 }
 
 .channel {
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
 }
 
 .channel:hover {
-  background: #2a2a40;
+  background: rgba(124,58,237,0.15);
 }
 
 .chat {
@@ -82,46 +62,46 @@ button {
   overflow-y: auto;
 }
 
-.inputBar {
+#messages div {
+  padding: 8px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+}
+
+.input {
   display: flex;
   padding: 10px;
-  background: #161625;
+  background: rgba(255,255,255,0.03);
 }
 
 .users {
   width: 180px;
-  background: #141422;
-  padding: 10px;
+  background: rgba(255,255,255,0.03);
 }
 
-/* OWNER MODAL */
-#ownerModal {
+/* OWNER PANEL */
+#ownerPanel {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: rgba(0,0,0,0.6);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.modal {
+.panel {
   background: #161625;
   padding: 20px;
   border-radius: 12px;
+  width: 300px;
 }
 
-/* GIF PANEL */
-#gifPanel {
-  position: absolute;
-  bottom: 80px;
-  left: 220px;
-  width: 300px;
-  background: #161625;
-  border-radius: 12px;
-  padding: 10px;
-  max-height: 400px;
-  overflow-y: auto;
+button {
+  background: #7c3aed;
+  border: none;
+  padding: 8px;
+  color: white;
+  border-radius: 8px;
+  margin-top: 5px;
 }
