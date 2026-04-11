@@ -3,9 +3,6 @@ const socket = io();
 let username = "";
 let room = "general";
 
-const GIPHY_API_KEY = "OU2xZQ6AXcETFTcyXK3Vd0pf5HB7wwFd";
-
-/* LOGIN */
 function enterApp() {
   username = document.getElementById("usernameInput").value;
   if (!username) return;
@@ -16,14 +13,13 @@ function enterApp() {
   socket.emit("join", { username, room });
 }
 
-/* SWITCH ROOM */
-function switchRoom(newRoom) {
-  room = newRoom;
+function switchRoom(r) {
+  room = r;
   document.getElementById("messages").innerHTML = "";
   socket.emit("join", { username, room });
 }
 
-/* MESSAGE */
+/* MESSAGES */
 const input = document.getElementById("msgInput");
 
 input.addEventListener("keypress", (e) => {
@@ -39,59 +35,19 @@ input.addEventListener("keypress", (e) => {
   }
 });
 
-/* GIF */
-function toggleGifPanel() {
-  document.getElementById("gifPanel").classList.toggle("hidden");
-}
-
-function closeGifPanel() {
-  document.getElementById("gifPanel").classList.add("hidden");
-}
-
-const gifSearch = document.getElementById("gifSearch");
-const gifResults = document.getElementById("gifResults");
-
-gifSearch.addEventListener("input", async () => {
-  const q = gifSearch.value.trim();
-  if (!q) return;
-
-  const res = await fetch(
-    `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${q}&limit=10`
-  );
-
-  const data = await res.json();
-  gifResults.innerHTML = "";
-
-  data.data.forEach(gif => {
-    const img = document.createElement("img");
-    img.src = gif.images.fixed_width.url;
-
-    img.onclick = () => {
-      socket.emit("send-message", {
-        type: "gif",
-        url: gif.images.fixed_width.url
-      });
-
-      closeGifPanel();
-    };
-
-    gifResults.appendChild(img);
-  });
-});
-
 /* RECEIVE */
+socket.on("receive-message", addMessage);
+
 socket.on("chat-history", (msgs) => {
-  const messages = document.getElementById("messages");
-  messages.innerHTML = "";
+  const box = document.getElementById("messages");
+  box.innerHTML = "";
   msgs.forEach(addMessage);
 });
 
-socket.on("receive-message", addMessage);
-
-socket.on("system-message", (msg) => {
+socket.on("system-message", (m) => {
   const div = document.createElement("div");
   div.className = "system";
-  div.textContent = msg.text;
+  div.textContent = m.text;
   document.getElementById("messages").appendChild(div);
 });
 
@@ -105,99 +61,66 @@ socket.on("user-list", (users) => {
   });
 });
 
-socket.on("typing", (user) => {
-  const t = document.getElementById("typing");
-  t.textContent = `${user} is typing...`;
-  setTimeout(() => t.textContent = "", 1000);
-});
-
 function addMessage(msg) {
   const div = document.createElement("div");
   div.className = "message";
-
-  if (msg.type === "gif") {
-    div.innerHTML = `
-      <b>${msg.user}</b><br>
-      <img src="${msg.url}" style="max-width:200px;border-radius:12px;"><br>
-      <small>${msg.time}</small>
-    `;
-  } else {
-    div.innerHTML = `
-      <b>${msg.user}</b><br>
-      ${msg.text}<br>
-      <small>${msg.time}</small>
-    `;
-  }
-
+  div.innerHTML = `<b>${msg.user}</b><br>${msg.text || ""}`;
   document.getElementById("messages").appendChild(div);
 }
 
-/* =========================
-   OWNER PANEL FEATURES
-========================= */
-
-function closeOwnerPanel() {
-  document.getElementById("ownerPanel").classList.add("hidden");
+/* GIF PANEL */
+function toggleGifPanel() {
+  document.getElementById("gifPanel").classList.toggle("hidden");
 }
 
-function clearChat() {
-  document.getElementById("messages").innerHTML = "";
+function closeGifPanel() {
+  document.getElementById("gifPanel").classList.add("hidden");
 }
 
-function fakeAnnouncement() {
-  const text = prompt("Announcement:");
-  if (!text) return;
-
-  const div = document.createElement("div");
-  div.className = "system";
-  div.textContent = "📢 " + text;
-  document.getElementById("messages").appendChild(div);
+/* OWNER PANEL */
+function toggleOwnerPanel() {
+  document.getElementById("ownerPanel").classList.toggle("hidden");
 }
 
-function wipeRoom() {
-  document.getElementById("messages").innerHTML = "";
+/* CREATE OWNER BUTTON ON UNLOCK */
+function createOwnerButton() {
+  if (document.getElementById("ownerToggleBtn")) return;
+
+  const btn = document.createElement("button");
+  btn.id = "ownerToggleBtn";
+  btn.innerText = "👑 Owner";
+  btn.style.position = "absolute";
+  btn.style.bottom = "80px";
+  btn.style.right = "20px";
+  btn.onclick = toggleOwnerPanel;
+
+  document.body.appendChild(btn);
 }
 
-function kickUser() {
-  const user = document.getElementById("kickUserInput").value;
-  if (!user) return;
-
-  alert(`${user} kicked (visual only)`);
-}
-
-/* OWNER PANEL TRIGGER (K+A+O+S) */
-const requiredKeys = new Set(["k", "a", "o", "s"]);
-const pressedKeys = new Set();
-
-let holdTimer = null;
-let ownerUnlocked = false;
-
-const ownerPanel = document.getElementById("ownerPanel");
-
-function openOwnerPanel() {
-  ownerPanel.classList.remove("hidden");
-}
+/* KEY COMBO (K+A+O+S) */
+const keys = new Set();
+const required = new Set(["k", "a", "o", "s"]);
+let timer = null;
+let unlocked = false;
 
 document.addEventListener("keydown", (e) => {
-  const key = e.key.toLowerCase();
-  if (!requiredKeys.has(key)) return;
+  const k = e.key.toLowerCase();
+  if (!required.has(k)) return;
 
-  pressedKeys.add(key);
+  keys.add(k);
 
-  if (pressedKeys.size === requiredKeys.size && !holdTimer && !ownerUnlocked) {
-    holdTimer = setTimeout(() => {
-      ownerUnlocked = true;
-      openOwnerPanel();
+  if (keys.size === 4 && !timer && !unlocked) {
+    timer = setTimeout(() => {
+      unlocked = true;
+      document.getElementById("ownerPanel").classList.remove("hidden");
+      createOwnerButton();
     }, 3000);
   }
 });
 
 document.addEventListener("keyup", (e) => {
-  const key = e.key.toLowerCase();
-  pressedKeys.delete(key);
+  keys.delete(e.key.toLowerCase());
 
-  if (holdTimer) {
-    clearTimeout(holdTimer);
-    holdTimer = null;
-  }
+  clearTimeout(timer);
+  timer = null;
 });
