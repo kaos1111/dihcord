@@ -1,37 +1,69 @@
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: #1e1f22;
   color: white;
 }
 
+/* LOGIN */
+.login {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.login input {
+  padding: 10px;
+  margin: 10px;
+}
+
+/* APP */
 .app {
   display: flex;
   height: 100vh;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 220px;
+/* servers */
+.servers {
+  width: 70px;
+  background: #1a1b1e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+}
+
+.server {
+  width: 40px;
+  height: 40px;
+  background: #313338;
+  margin: 5px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* channels */
+.channels {
+  width: 200px;
   background: #2b2d31;
-  padding: 15px;
+  padding: 10px;
 }
 
-.sidebar h2 {
-  margin: 0 0 20px;
+.channel {
+  padding: 5px;
+  cursor: pointer;
 }
 
-.section h3 {
-  font-size: 13px;
-  color: #aaa;
+.channel.active {
+  background: #404249;
 }
 
-#users {
-  list-style: none;
-  padding: 0;
-}
-
-/* Chat */
+/* chat */
 .chat {
   flex: 1;
   display: flex;
@@ -40,44 +72,37 @@ body {
 
 .messages {
   flex: 1;
-  padding: 15px;
+  padding: 10px;
   overflow-y: auto;
 }
 
-/* Message bubble */
 .message {
+  margin: 5px 0;
   background: #313338;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  max-width: 70%;
+  padding: 8px;
+  border-radius: 6px;
 }
 
-.meta {
-  font-size: 11px;
+.system {
   color: #aaa;
+  font-size: 12px;
 }
 
-/* Input */
-.input-area {
-  display: flex;
-  padding: 10px;
-  background: #2b2d31;
-}
-
-.input-area input {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-}
-
-.input-area button {
-  margin-left: 10px;
-  padding: 10px 15px;
-  background: #5865f2;
+.input input {
+  width: 100%;
+  padding: 12px;
+  background: #383a40;
   border: none;
   color: white;
-  border-radius: 5px;
-  cursor: pointer;
+}
+
+/* users */
+.users {
+  width: 150px;
+  background: #2b2d31;
+  padding: 10px;
+}
+
+.hidden {
+  display: none;
 }
