@@ -1,120 +1,150 @@
 const socket = io();
 
 let username = "";
-let room = "general";
+let currentRoom = "general";
 let isOwner = false;
 
-/* LOGIN */
-function enterApp() {
-  username = document.getElementById("usernameInput").value;
-  if (!username) return;
+/* INIT SAFE */
+document.addEventListener("DOMContentLoaded", () => {
 
-  document.getElementById("login").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
+  const loginScreen = document.getElementById("loginScreen");
+  const app = document.getElementById("app");
 
-  socket.emit("join", { username, room });
-}
+  document.getElementById("enterBtn").onclick = () => {
+    const input = document.getElementById("usernameInput");
+    if (!input.value) return;
 
-/* SWITCH */
-function switchRoom(r) {
-  room = r;
-  document.getElementById("messages").innerHTML = "";
-  socket.emit("join", { username, room });
-}
+    username = input.value;
+    socket.emit("join", username);
 
-/* SEND */
-const input = document.getElementById("msgInput");
+    loginScreen.style.display = "none";
+    app.classList.remove("hidden");
+  };
 
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    socket.emit("send-message", { text: input.value });
+  /* SEND MESSAGE */
+  document.getElementById("sendBtn").onclick = sendMessage;
+
+  document.getElementById("msgInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") sendMessage();
+  });
+
+  function sendMessage() {
+    const input = document.getElementById("msgInput");
+    if (!input.value) return;
+
+    socket.emit("send-message", {
+      room: currentRoom,
+      text: input.value
+    });
+
     input.value = "";
   }
-});
 
-/* RECEIVE */
-socket.on("receive-message", (msg) => {
-  const div = document.createElement("div");
-
-  if (msg.type === "gif") {
-    div.innerHTML = `${msg.user}: <img src="${msg.url}" width="150">`;
-  } else {
-    div.textContent = `${msg.user}: ${msg.text}`;
-  }
-
-  document.getElementById("messages").appendChild(div);
-});
-
-/* USERS */
-socket.on("user-list", (users) => {
-  const box = document.getElementById("users");
-  box.innerHTML = users.map(u => `<div>${u}</div>`).join("");
-});
-
-/* GIF */
-function toggleGif() {
-  document.getElementById("gifPanel").classList.toggle("hidden");
-}
-
-document.getElementById("gifSearch").addEventListener("input", async (e) => {
-  const q = e.target.value;
-  if (!q) return;
-
-  const res = await fetch(
-    `https://api.giphy.com/v1/gifs/search?api_key=OU2xZQ6AXcETFTcyXK3Vd0pf5HB7wwFd&q=${q}&limit=5`
-  );
-
-  const data = await res.json();
-
-  const box = document.getElementById("gifResults");
-  box.innerHTML = "";
-
-  data.data.forEach(g => {
-    const img = document.createElement("img");
-    img.src = g.images.fixed_width.url;
-
-    img.onclick = () => {
-      socket.emit("send-message", {
-        type: "gif",
-        url: g.images.fixed_width.url
-      });
-
-      document.getElementById("gifPanel").classList.add("hidden");
+  /* ROOM SWITCH */
+  document.querySelectorAll(".channel").forEach(el => {
+    el.onclick = () => {
+      currentRoom = el.dataset.room;
+      socket.emit("join-room", currentRoom);
     };
-
-    box.appendChild(img);
   });
-});
 
-/* OWNER PANEL */
-function sendOwner() {
-  const text = prompt("announcement");
-  if (!text) return;
-  socket.emit("owner-message", text);
-}
+  /* RECEIVE MESSAGE */
+  socket.on("receive-message", msg => {
+    const div = document.createElement("div");
+    div.textContent = `[${msg.username}] ${msg.text}`;
+    document.getElementById("messages").appendChild(div);
+  });
 
-/* OWNER UNLOCK */
-const keys = new Set();
-const req = new Set(["k","a","o","s"]);
-let timer = null;
+  socket.on("chat-history", msgs => {
+    const box = document.getElementById("messages");
+    box.innerHTML = "";
+    msgs.forEach(m => {
+      const div = document.createElement("div");
+      div.textContent = `[${m.username}] ${m.text}`;
+      box.appendChild(div);
+    });
+  });
 
-document.addEventListener("keydown", (e) => {
-  const k = e.key.toLowerCase();
-  if (!req.has(k)) return;
+  socket.on("user-list", users => {
+    const list = document.getElementById("userList");
+    list.innerHTML = "";
+    users.forEach(u => {
+      const div = document.createElement("div");
+      div.textContent = u.isOwner ? "👑 " + u.username : u.username;
+      list.appendChild(div);
+    });
+  });
 
-  keys.add(k);
+  /* GIF SYSTEM */
+  const gifBtn = document.getElementById("gifBtn");
+  const gifPanel = document.getElementById("gifPanel");
 
-  if (keys.size === 4 && !timer && !isOwner) {
-    timer = setTimeout(() => {
-      isOwner = true;
-      socket.emit("owner-unlock");
-      document.getElementById("ownerPanel").classList.remove("hidden");
-    }, 3000);
-  }
-});
+  gifBtn.onclick = () => {
+    gifPanel.classList.toggle("hidden");
+  };
 
-document.addEventListener("keyup", () => {
-  keys.clear();
-  clearTimeout(timer);
-  timer = null;
+  const API_KEY = "YOUR_GIPHY_API_KEY";
+
+  document.getElementById("gifSearch").addEventListener("input", async e => {
+    const q = e.target.value;
+    if (!q) return;
+
+    const res = await fetch(
+      `https://api.giphy.com/v1/gifs/search?api_key=${API_KEY}&q=${q}&limit=10`
+    );
+
+    const data = await res.json();
+    const box = document.getElementById("gifResults");
+    box.innerHTML = "";
+
+    data.data.forEach(gif => {
+      const img = document.createElement("img");
+      img.src = gif.images.fixed_width.url;
+      img.onclick = () => {
+        socket.emit("send-message", {
+          room: currentRoom,
+          text: gif.images.fixed_width.url
+        });
+        gifPanel.classList.add("hidden");
+      };
+      box.appendChild(img);
+    });
+  });
+
+  /* OWNER HOLD KEY COMBO (K + A + O + S) */
+  const keys = new Set();
+  let holdTimer = null;
+
+  document.addEventListener("keydown", e => {
+    keys.add(e.key.toLowerCase());
+
+    if (["k","a","o","s"].every(k => keys.has(k))) {
+      if (!holdTimer) {
+        holdTimer = setTimeout(() => {
+          socket.emit("owner-unlock");
+        }, 3000);
+      }
+    }
+  });
+
+  document.addEventListener("keyup", e => {
+    keys.delete(e.key.toLowerCase());
+    clearTimeout(holdTimer);
+    holdTimer = null;
+  });
+
+  socket.on("owner-confirmed", () => {
+    isOwner = true;
+    document.getElementById("ownerModal").classList.remove("hidden");
+  });
+
+  /* OWNER PANEL */
+  document.getElementById("sendAnnouncement").onclick = () => {
+    const text = document.getElementById("announcementText").value;
+    socket.emit("owner-message", text);
+  };
+
+  document.getElementById("closeOwner").onclick = () => {
+    document.getElementById("ownerModal").classList.add("hidden");
+  };
 });
