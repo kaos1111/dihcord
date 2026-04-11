@@ -10,9 +10,6 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static("public"));
 
-/* =========================
-   STORAGE
-========================= */
 const messages = {
   general: [],
   announcements: []
@@ -23,18 +20,14 @@ const users = {
   announcements: {}
 };
 
-/* =========================
-   OWNER SYSTEM
-========================= */
-const owners = new Set(); // socket.id
+const owners = new Set();
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("Connected:", socket.id);
 
   socket.on("join", ({ username, room }) => {
     socket.username = username;
 
-    // ONLY allow announcements if owner
     if (room === "announcements" && !owners.has(socket.id)) {
       room = "general";
     }
@@ -47,16 +40,9 @@ io.on("connection", (socket) => {
     socket.join(room);
 
     socket.emit("chat-history", messages[room] || []);
-
     updateUsers(room);
-
-    socket.to(room).emit("system-message", {
-      text: `${username} joined #${room}`,
-      time: new Date().toLocaleTimeString()
-    });
   });
 
-  /* MESSAGE */
   socket.on("send-message", (msg) => {
     const room = socket.room;
     if (!room) return;
@@ -64,34 +50,23 @@ io.on("connection", (socket) => {
     const message = {
       user: socket.username,
       text: msg.text || "",
-      type: msg.type || "text",
-      url: msg.url || null,
       time: new Date().toLocaleTimeString()
     };
 
-    if (!messages[room]) messages[room] = [];
     messages[room].push(message);
-
-    if (messages[room].length > 200) messages[room].shift();
-
     io.to(room).emit("receive-message", message);
   });
 
-  /* OWNER UNLOCK */
   socket.on("owner-unlock", () => {
     owners.add(socket.id);
-    socket.emit("owner-status", true);
-    console.log(`${socket.username} is OWNER`);
   });
 
-  /* OWNER ANNOUNCEMENT */
   socket.on("owner-message", (text) => {
     if (!owners.has(socket.id)) return;
 
     const message = {
       user: "👑 OWNER",
       text,
-      type: "text",
       time: new Date().toLocaleTimeString()
     };
 
@@ -99,20 +74,13 @@ io.on("connection", (socket) => {
     io.to("announcements").emit("receive-message", message);
   });
 
-  /* DISCONNECT */
   socket.on("disconnect", () => {
     delete owners[socket.id];
 
     const room = socket.room;
     if (room && users[room]) {
       delete users[room][socket.id];
-
       updateUsers(room);
-
-      socket.to(room).emit("system-message", {
-        text: `${socket.username || "Someone"} left`,
-        time: new Date().toLocaleTimeString()
-      });
     }
   });
 
@@ -122,5 +90,5 @@ io.on("connection", (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on ${PORT}`);
 });
