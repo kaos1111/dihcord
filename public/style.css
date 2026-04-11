@@ -1,81 +1,95 @@
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #0f0f17;
-  color: white;
+  font-family: "Segoe UI", sans-serif;
+  background: #0b0d12;
+  color: #e6e6e6;
 }
 
+/* LOGIN */
 .login {
   height: 100vh;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle at top, #3b1b7a, #0f0f17);
 }
 
-.login input {
-  padding: 12px;
-  border-radius: 12px;
+.login-box {
+  background: #141824;
+  padding: 30px;
+  border-radius: 16px;
+  text-align: center;
+  width: 300px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 10px;
   border: none;
-  margin: 10px;
-  background: #1c1c2b;
+  background: #1d2233;
   color: white;
 }
 
-.login button {
-  padding: 10px 20px;
-  border-radius: 12px;
+button {
+  background: #6c5ce7;
   border: none;
-  background: #7c3aed;
+  padding: 10px;
+  border-radius: 10px;
   color: white;
+  cursor: pointer;
 }
 
+/* APP */
 .app {
   display: flex;
   height: 100vh;
 }
 
-.hidden {
-  display: none;
-}
-
-.servers {
+/* SIDEBAR */
+.sidebar {
   width: 70px;
-  background: #141426;
+  background: #0f121a;
   display: flex;
   justify-content: center;
-  padding-top: 10px;
+  padding-top: 15px;
 }
 
-.server {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background: #2a2a40;
+.server-icon {
+  width: 40px;
+  height: 40px;
+  background: #2a2f45;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* CHANNELS */
 .channels {
   width: 220px;
-  background: #1a1a2b;
+  background: #111522;
   padding: 15px;
 }
 
 .channel {
   padding: 10px;
-  border-radius: 10px;
   margin: 5px 0;
+  border-radius: 8px;
   cursor: pointer;
+  background: transparent;
 }
 
 .channel.active {
-  background: #7c3aed;
+  background: #6c5ce7;
 }
 
+/* CHAT */
 .chat {
   flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .messages {
@@ -85,58 +99,42 @@ body {
 }
 
 .message {
-  background: #1c1c2b;
-  padding: 12px;
+  background: #141a2a;
+  padding: 10px;
   margin: 8px 0;
-  border-radius: 14px;
-  max-width: 70%;
+  border-radius: 12px;
 }
 
 .system {
   text-align: center;
-  color: #aaa;
+  color: #888;
   font-size: 12px;
 }
 
-.input {
+/* INPUT */
+.input-bar {
   display: flex;
+  gap: 10px;
   padding: 10px;
-  background: #141426;
-  gap: 8px;
+  background: #0f121a;
 }
 
-.input input {
-  flex: 1;
-  padding: 12px;
-  border-radius: 12px;
-  border: none;
-  background: #1a1a2b;
-  color: white;
-}
-
-button {
-  background: #7c3aed;
-  border: none;
-  color: white;
-  border-radius: 10px;
-  padding: 10px;
-}
-
+/* USERS */
 .users {
   width: 180px;
-  background: #1a1a2b;
+  background: #111522;
   padding: 15px;
 }
 
-/* GIF PANEL */
+/* GIF */
 .gif-panel {
   position: absolute;
   bottom: 80px;
   right: 20px;
   width: 320px;
-  height: 400px;
-  background: #1a1a2b;
-  border-radius: 16px;
+  height: 350px;
+  background: #141824;
+  border-radius: 12px;
 }
 
 .gif-header {
@@ -144,26 +142,11 @@ button {
   padding: 10px;
 }
 
-.gif-header input {
-  flex: 1;
-  background: #111;
-  color: white;
-  border: none;
-  padding: 8px;
-}
-
 .gif-results {
-  height: 340px;
+  height: 280px;
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 5px;
-  padding: 5px;
-}
-
-.gif-results img {
-  width: 100%;
-  border-radius: 10px;
 }
 
 /* OWNER PANEL */
@@ -172,26 +155,8 @@ button {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #0f0f17;
-  border: 2px solid #7c3aed;
+  background: #141824;
   padding: 15px;
   border-radius: 12px;
-  width: 320px;
-  z-index: 99999;
-}
-
-.owner-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.owner-header button {
-  background: red;
-}
-
-.owner-buttons button,
-.owner-kick button {
-  width: 100%;
-  margin-top: 8px;
+  width: 300px;
 }
