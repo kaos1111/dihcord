@@ -29,7 +29,6 @@ const users = {
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  /* JOIN */
   socket.on("join", ({ username, room }) => {
     socket.username = username;
     socket.room = room;
@@ -49,7 +48,6 @@ io.on("connection", (socket) => {
     });
   });
 
-  /* MESSAGE */
   socket.on("send-message", (msg) => {
     const room = socket.room;
     if (!room) return;
@@ -72,14 +70,12 @@ io.on("connection", (socket) => {
     io.to(room).emit("receive-message", message);
   });
 
-  /* TYPING */
   socket.on("typing", () => {
     if (socket.room) {
       socket.to(socket.room).emit("typing", socket.username);
     }
   });
 
-  /* OWNER AUTH (OPTIONAL SERVER SECURITY) */
   socket.on("owner-auth", ({ password }) => {
     if (password === "CHANGE_THIS_SECRET") {
       socket.emit("owner-granted");
@@ -88,7 +84,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  /* DISCONNECT */
   socket.on("disconnect", () => {
     const room = socket.room;
 
@@ -110,9 +105,6 @@ io.on("connection", (socket) => {
   }
 });
 
-/* =========================
-   START SERVER
-========================= */
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
