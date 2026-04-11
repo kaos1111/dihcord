@@ -15,14 +15,14 @@ function enterApp() {
   socket.emit("join", { username, room });
 }
 
-/* ROOM */
+/* SWITCH */
 function switchRoom(r) {
   room = r;
   document.getElementById("messages").innerHTML = "";
   socket.emit("join", { username, room });
 }
 
-/* MESSAGE */
+/* SEND */
 const input = document.getElementById("msgInput");
 
 input.addEventListener("keydown", (e) => {
@@ -35,34 +35,60 @@ input.addEventListener("keydown", (e) => {
 /* RECEIVE */
 socket.on("receive-message", (msg) => {
   const div = document.createElement("div");
-  div.className = "message";
-  div.textContent = `${msg.user}: ${msg.text}`;
+
+  if (msg.type === "gif") {
+    div.innerHTML = `${msg.user}: <img src="${msg.url}" width="150">`;
+  } else {
+    div.textContent = `${msg.user}: ${msg.text}`;
+  }
+
   document.getElementById("messages").appendChild(div);
 });
 
 /* USERS */
 socket.on("user-list", (users) => {
-  const list = document.getElementById("userList");
-  list.innerHTML = "";
-  users.forEach(u => {
-    const d = document.createElement("div");
-    d.textContent = u;
-    list.appendChild(d);
-  });
+  const box = document.getElementById("users");
+  box.innerHTML = users.map(u => `<div>${u}</div>`).join("");
 });
 
 /* GIF */
-function toggleGifPanel() {
+function toggleGif() {
   document.getElementById("gifPanel").classList.toggle("hidden");
 }
 
-/* OWNER */
-function toggleOwnerPanel() {
-  document.getElementById("ownerPanel").classList.toggle("hidden");
-}
+document.getElementById("gifSearch").addEventListener("input", async (e) => {
+  const q = e.target.value;
+  if (!q) return;
 
-function sendOwnerMsg() {
-  const text = prompt("Announcement:");
+  const res = await fetch(
+    `https://api.giphy.com/v1/gifs/search?api_key=OU2xZQ6AXcETFTcyXK3Vd0pf5HB7wwFd&q=${q}&limit=5`
+  );
+
+  const data = await res.json();
+
+  const box = document.getElementById("gifResults");
+  box.innerHTML = "";
+
+  data.data.forEach(g => {
+    const img = document.createElement("img");
+    img.src = g.images.fixed_width.url;
+
+    img.onclick = () => {
+      socket.emit("send-message", {
+        type: "gif",
+        url: g.images.fixed_width.url
+      });
+
+      document.getElementById("gifPanel").classList.add("hidden");
+    };
+
+    box.appendChild(img);
+  });
+});
+
+/* OWNER PANEL */
+function sendOwner() {
+  const text = prompt("announcement");
   if (!text) return;
   socket.emit("owner-message", text);
 }
