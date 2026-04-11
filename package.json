@@ -1,7 +1,9 @@
+
 {
-  "name": "mini-discord",
-  "version": "2.1.0",
+  "name": "mini-discord-pro",
+  "version": "2.0.0",
   "main": "server.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node server.js"
   },
