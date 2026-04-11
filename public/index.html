@@ -18,31 +18,26 @@
 <!-- APP -->
 <div id="app" class="app hidden">
 
-  <!-- SERVERS -->
   <div class="servers">
     <div class="server">#</div>
   </div>
 
-  <!-- CHANNELS -->
   <div class="channels">
     <h3>TEXT CHANNELS</h3>
     <div class="channel active" onclick="switchRoom('general')"># general</div>
     <div class="channel" onclick="switchRoom('random')"># random</div>
   </div>
 
-  <!-- CHAT -->
   <div class="chat">
 
     <div id="messages" class="messages"></div>
     <div id="typing"></div>
 
-    <!-- INPUT -->
     <div class="input">
-      <button onclick="toggleGifPanel()" id="gifBtn">GIF</button>
+      <button onclick="toggleGifPanel()">GIF</button>
       <input id="msgInput" placeholder="Message..." />
     </div>
 
-    <!-- GIF PANEL -->
     <div id="gifPanel" class="gif-panel hidden">
       <div class="gif-header">
         <input id="gifSearch" placeholder="Search GIFs..." />
@@ -53,12 +48,17 @@
 
   </div>
 
-  <!-- USERS -->
   <div class="users">
     <h3>ONLINE</h3>
     <div id="userList"></div>
   </div>
 
+</div>
+
+<!-- OWNER PANEL -->
+<div id="ownerPanel" class="owner-panel hidden">
+  <h2>Owner Panel</h2>
+  <p>Welcome, owner.</p>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
